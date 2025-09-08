@@ -34,8 +34,8 @@ jobs:
     - name: Set AKS context
       uses: azure/aks-set-context@v3
       with:
-        resource-group: newrg
-        cluster-name: myAKSCluster
+        resource-group: prod-rg 
+        cluster-name: minecluster
 
     - name: Deploy to AKS
       run: |
