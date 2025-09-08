@@ -1,0 +1,39 @@
+name: CI/CD Pipeline for AKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Azure CLI - Login to ACR
+      run: az acr login --name mydeploymentacr
+
+    - name: Build and push Docker image
+      run: |
+        IMAGE_TAG=mydeploymentacr.azurecr.io/myapp:${{ github.sha }}
+        docker build -t $IMAGE_TAG .
+        docker push $IMAGE_TAG
+
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: newrg
+        cluster-name: myAKSCluster
+
+    - name: Deploy to AKS
+      run: |
+        kubectl set image deployment/myapp-deployment myapp=mydeploymentacr.azurecr.io/myapp:${{ github.sha }}
+        kubectl rollout status deployment/myapp-deployment
